@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin xmlns="http://www.phonegap.com/ns/plugins/1.0"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    id="com.distimo.sdk.cordova"
+    version="0.0">
+
+    <!-- Plugin name -->
+    <name>Distimo SDK</name>
+    
+    <!-- Plugin description -->
+    <description>
+      &lt;p&gt;This is the official plugin for the Distimo SDK in Apache Cordova/PhoneGap.&lt;/p&gt;
+      
+      &lt;p&gt;The DistimoSDK plugin for Apache Cordova allows you to use Distimo Conversion Tracking
+      in combination with your apps created with Apache PhoneGap/Cordova. For more information, visit
+      http://www.distimo.com/conversion-tracking.&lt;/p&gt;
+    </description>
+    
+    <!-- License -->
+    <license>Apache 2.0</license>
+    
+    <!-- DistimoSDK JS interface -->
+    <asset src="js/distimosdk.js" target="js/distimosdk/distimosdk.js" />
+    
+    <!-- Cordova >= 3.4 -->
+    <engines>
+      <engine name="cordova" version=">=3.4.0" />
+    </engines>
+    
+    <!-- android -->
+    <platform name="android">
+
+        <!-- Plugin specification in config.xml -->
+        <config-file target="config.xml" parent="/*">
+            <feature name="DistimoSDK">
+                <param name="android-package" value="com.distimo.sdk.cordova.CDVDistimoSDK"/>
+            </feature>
+        </config-file>
+        
+        <!-- DistimoSDK cordova plugin src file -->
+        <source-file src="src/android/CDVDistimoSDK.java" target-dir="src/com/distimo/sdk/cordova" />
+        
+        <!-- DistimoSDK open source files -->
+        <source-file src="src/android/EventManager.java" target-dir="src/com/distimo/sdk" />
+        <source-file src="src/android/Utils.java" target-dir="src/com/distimo/sdk" />
+        <source-file src="src/android/OldBase64.java" target-dir="src/com/distimo/sdk" />
+        <source-file src="src/android/DistimoExceptionHandler.java" target-dir="src/com/distimo/sdk" />
+        <source-file src="src/android/InstallReferrerReceiver.java" target-dir="src/com/distimo/sdk" />
+        <source-file src="src/android/AppLinkManager.java" target-dir="src/com/distimo/sdk" />
+        <source-file src="src/android/DistimoSDK.java" target-dir="src/com/distimo/sdk" />
+        
+        <!-- INTERNET permission -->
+        <config-file target="AndroidManifest.xml" parent="/manifest">
+            <uses-permission android:name="android.permission.INTERNET" />
+        </config-file>
+        
+        <!-- INSTALL_REFERRER intent -->
+        <config-file target="AndroidManifest.xml" parent="/manifest/application">
+            <receiver android:name="com.distimo.sdk.InstallReferrerReceiver" android:exported="true">
+                <intent-filter>
+                    <action android:name="com.android.vending.INSTALL_REFERRER" />
+                </intent-filter>
+            </receiver>
+        </config-file>
+                  
+    </platform>
+    
+    <!-- ios -->
+    <platform name="ios">
+      
+        <!-- Plugin specification in config.xml -->
+        <config-file target="config.xml" parent="/*">
+            <feature name="DistimoSDK">
+                <param name="ios-package" value="CDVDistimoSDK"/>
+            </feature>
+        </config-file>
+        
+        <!-- DistimoSDK plugin src file -->
+        <source-file src="src/ios/CDVDistimoSDK.m" compiler-flags="-fno-objc-arc" />
+
+        <!-- DistimoSDK open sources files -->
+        <header-file src="src/ios/DistimoSDK.h" />
+        <header-file src="src/ios/DistimoSDK+Configuration.h" />
+        <header-file src="src/ios/DMSDKApplicationManager.h" />
+        <header-file src="src/ios/DMSDKAppLinkManager.h" />
+        <header-file src="src/ios/DMSDKEvent.h" />
+        <header-file src="src/ios/DMSDKEventLogger.h" />
+        <header-file src="src/ios/DMSDKEventManager.h" />
+        <header-file src="src/ios/DMSDKIDManager.h" />
+        <header-file src="src/ios/DMSDKNSDataTools.h" />
+        <header-file src="src/ios/DMSDKNSStringTools.h" />
+        <header-file src="src/ios/DMSDKPasteboardManager.h" />
+        <header-file src="src/ios/DMSDKSettingsManager.h" />
+        <header-file src="src/ios/DMSDKTools.h" />
+        <header-file src="src/ios/DMSDKUIDeviceTools.h" />
+        
+        <source-file src="src/ios/DistimoSDK.m" compiler-flags="-fno-objc-arc" />
+        <source-file src="src/ios/DMSDKApplicationManager.m" compiler-flags="-fno-objc-arc" />
+        <source-file src="src/ios/DMSDKAppLinkManager.m" compiler-flags="-fno-objc-arc" />
+        <source-file src="src/ios/DMSDKEvent.m" compiler-flags="-fno-objc-arc" />
+        <source-file src="src/ios/DMSDKEventLogger.m" compiler-flags="-fno-objc-arc" />
+        <source-file src="src/ios/DMSDKIDManager.m" compiler-flags="-fno-objc-arc" />
+        <source-file src="src/ios/DMSDKNSDataTools.m" compiler-flags="-fno-objc-arc" />
+        <source-file src="src/ios/DMSDKNSStringTools.m" compiler-flags="-fno-objc-arc" />
+        <source-file src="src/ios/DMSDKPasteboardManager.m" compiler-flags="-fno-objc-arc" />
+        <source-file src="src/ios/DMSDKSettingsManager.m" compiler-flags="-fno-objc-arc" />
+        <source-file src="src/ios/DMSDKEventManager.m" compiler-flags="-fno-objc-arc" />
+        <source-file src="src/ios/DMSDKUIDeviceTools.m" compiler-flags="-fno-objc-arc" />
+        
+        <!-- iOS system frameworks -->
+        <framework src="Security.framework" />
+
+    </platform>
+    
+</plugin>
