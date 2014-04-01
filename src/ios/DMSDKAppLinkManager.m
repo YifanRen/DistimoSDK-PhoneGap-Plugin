@@ -68,7 +68,12 @@
 
 - (id)init {
 	if ((self = [super init])) {
+#pragma clang diagnostic push
+#ifndef __IPHONE_8_0
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif
 		dispatch_safe_sync(dispatch_get_main_queue(), ^{
+#pragma clang diagnostic pop
 			UIWebView *webView = [[UIWebView alloc] initWithFrame:CGRectZero];
 			self.userAgent = [webView stringByEvaluatingJavaScriptFromString:@"navigator.userAgent"];
 			[webView release];
@@ -180,7 +185,12 @@
 		self.handlingConnection = NO;
 		
 		//Show product
+#pragma clang diagnostic push
+#ifndef __IPHONE_8_0
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif
 		dispatch_safe_sync(dispatch_get_main_queue(), ^{
+#pragma clang diagnostic pop
 			Class pvcClass = NSClassFromString(@"SKStoreProductViewController");
 			Protocol *pvcProtocol = NSProtocolFromString(@"SKStoreProductViewControllerDelegate");
 			
@@ -199,7 +209,12 @@
 														 [[NSNotificationCenter defaultCenter] postNotificationName:kDistimoSDKOpenAppLinkSuccessNotification object:nil];
 														 
 														 DMLog(@"Presenting SKStoreProductViewController for productID %@", appstoreID);
+#pragma clang diagnostic push
+#ifndef __IPHONE_8_0
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif
 														 [self.viewController presentModalViewController:productViewController animated:YES];
+#pragma clang diagnostic pop
 													 } else {
 														 DMLog(@"Error opening SKStoreProductViewController: %@", error);
 														 [self handleRedirectFailure];
@@ -238,8 +253,8 @@
 
 - (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)response {
 	//Receiving a response means the redirect failed
-	int statuscode = [(NSHTTPURLResponse *)response statusCode];
-	DMLog(@"Failed to redirect: %d %@", statuscode, [NSHTTPURLResponse localizedStringForStatusCode:statuscode]);
+	long statuscode = [(NSHTTPURLResponse *)response statusCode];
+	DMLog(@"Failed to redirect: %ld %@", statuscode, [NSHTTPURLResponse localizedStringForStatusCode:statuscode]);
 	
 	[self handleRedirectFailure];
 }

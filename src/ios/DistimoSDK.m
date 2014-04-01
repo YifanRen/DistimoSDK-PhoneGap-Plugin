@@ -44,7 +44,12 @@ static BOOL _enabled = FALSE;
 	_enabled = [DMSDKIDManager setSDKKey:sdkKey];
 	
 	if (_enabled) {
+#pragma clang diagnostic push
+#ifndef __IPHONE_8_0
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif
 		dispatch_safe_sync(dispatch_get_main_queue(), ^{
+#pragma clang diagnostic pop
 			//Create the pasteboard manager
 			[sharedPasteboardManager refreshPasteboards];
 			

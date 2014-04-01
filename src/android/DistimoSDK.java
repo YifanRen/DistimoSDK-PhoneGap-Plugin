@@ -27,7 +27,9 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.os.AsyncTask;
 import android.os.Handler;
+import android.os.Looper;
 import android.provider.Settings.Secure;
 import android.util.Log;
 
@@ -104,6 +106,9 @@ public final class DistimoSDK {
 				//Generate IDs
 				generateUniqueUserID();
 				generateUniqueHardwareID(context);
+				
+				//Make sure an AsyncTask is created on the UI thread first
+				fixAsyncTaskBug();
 				
 				//Initialize the EventManager
 				EventManager.initialize(context);
@@ -411,6 +416,31 @@ public final class DistimoSDK {
 			preferences.edit().putBoolean(PREFERENCES_FIRSTLAUNCH_EMPTY, true).commit();
 		} else {
 			preferences.edit().putBoolean(PREFERENCES_FIRSTLAUNCH_PARAMS, true).commit();
+		}
+	}
+	
+	private static void fixAsyncTaskBug() {
+		//There is an issue with the class loader for AsyncTask
+		//e.g. http://grokbase.com/p/gg/android-developers/11ajf99wrs/possible-bug-in-asynctask
+		
+		Runnable runnable = new Runnable() {
+			@Override
+			public void run() {
+				new AsyncTask<Void, Void, Void>() {
+					@Override
+					protected Void doInBackground(Void... params) {
+						return null;
+					}
+				};
+			}
+		};
+		
+		if (Thread.currentThread() == Looper.getMainLooper().getThread()) {
+			//Already on the UI thread, just run
+			runnable.run();
+		} else {
+			//Post this on the UI thread
+			new Handler(Looper.getMainLooper()).post(runnable);
 		}
 	}
 }

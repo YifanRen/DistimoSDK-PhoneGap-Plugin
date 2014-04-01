@@ -80,7 +80,7 @@ static NSString *_signingKey = nil;
 	}
 
 	//Last 12 characters is signing key
-	int splitIndex = ([sdkKey length] - 12);
+	int splitIndex = ((int)[sdkKey length] - 12);
 	
 	[_organizationID release];
 	_organizationID = [[sdkKey substringToIndex:splitIndex] retain];

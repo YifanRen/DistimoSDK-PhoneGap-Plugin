@@ -22,9 +22,9 @@
     <!-- DistimoSDK JS interface -->
     <asset src="js/distimosdk.js" target="js/distimosdk/distimosdk.js" />
     
-    <!-- Cordova >= 3.4 -->
+    <!-- Cordova >= 3.0 -->
     <engines>
-      <engine name="cordova" version=">=3.4.0" />
+      <engine name="cordova" version=">=3.0.0" />
     </engines>
     
     <!-- android -->

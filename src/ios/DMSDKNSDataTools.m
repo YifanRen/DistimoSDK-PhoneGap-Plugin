@@ -215,7 +215,7 @@ static const char encodingTable[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopq
 + (NSString *)sha1FromData:(NSData *)data {
 	unsigned char digest[CC_SHA1_DIGEST_LENGTH];
 	
-	if (CC_SHA1([data bytes], [data length], digest)) {
+	if (CC_SHA1([data bytes], (unsigned int)[data length], digest)) {
 		NSMutableString *result = [NSMutableString stringWithCapacity:(CC_SHA1_DIGEST_LENGTH * 2)];
 		for (int i=0; i < CC_SHA1_DIGEST_LENGTH; i++) {
 			[result appendFormat:@"%02X", digest[i]];
@@ -230,7 +230,7 @@ static const char encodingTable[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopq
 + (NSString *)md5FromData:(NSData *)data {
 	unsigned char digest[CC_MD5_DIGEST_LENGTH];
 	
-	if (CC_MD5([data bytes], [data length], digest)) {
+	if (CC_MD5([data bytes], (unsigned int)[data length], digest)) {
 		NSMutableString *result = [NSMutableString stringWithCapacity:(CC_MD5_DIGEST_LENGTH * 2)];
 		for (int i=0; i < CC_MD5_DIGEST_LENGTH; i++) {
 			[result appendFormat:@"%02X", digest[i]];

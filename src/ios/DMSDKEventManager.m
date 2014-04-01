@@ -239,7 +239,7 @@
 	
 	@synchronized (self.eventQueue) {
 		if ([self.eventQueue count]) {
-			DMLog(@"Storing %d events to pasteboard", [self.eventQueue count]);
+			DMLog(@"Storing %ld events to pasteboard", (long)[self.eventQueue count]);
 			
 			//Prevent next event being sent
 			[NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(delayedSendNextEvent) object:nil];
@@ -314,7 +314,7 @@
 	self.currentEvent = event;
 	
 	NSString *parameterString = [event urlParamString];
-	DMLog(@"%@ (%d bytes postData) (%@)", event.name, [event.postData length], parameterString);
+	DMLog(@"%@ (%lu bytes postData) (%@)", event.name, (unsigned long)[event.postData length], parameterString);
 	
 	NSString *urlString = [NSString stringWithFormat:@"%@?%@", EVENT_URL, parameterString];
 	NSMutableURLRequest *urlRequest = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:urlString]];
@@ -421,7 +421,7 @@
 }
 
 - (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)response {
-	DMLog(@"Received response: %d %@", [(NSHTTPURLResponse *)response statusCode], [NSHTTPURLResponse localizedStringForStatusCode:[(NSHTTPURLResponse *)response statusCode]]);
+	DMLog(@"Received response: %ld %@", (long)[(NSHTTPURLResponse *)response statusCode], [NSHTTPURLResponse localizedStringForStatusCode:[(NSHTTPURLResponse *)response statusCode]]);
 	
 	if ([(NSHTTPURLResponse *)response statusCode] != 200) {
         [self.urlConnection cancel];
@@ -439,7 +439,7 @@
 }
 
 - (void)connection:(NSURLConnection *)connection didSendBodyData:(NSInteger)bytesWritten totalBytesWritten:(NSInteger)totalBytesWritten totalBytesExpectedToWrite:(NSInteger)totalBytesExpectedToWrite {
-	DMLog(@"Event body written: %d/%d (%d expected)", bytesWritten, totalBytesWritten, totalBytesExpectedToWrite);
+	DMLog(@"Event body written: %ld/%ld (%ld expected)", (long)bytesWritten, (long)totalBytesWritten, (long)totalBytesExpectedToWrite);
 }
 
 - (void)connectionDidFinishLoading:(NSURLConnection *)connection {
