@@ -59,17 +59,37 @@ module.exports = {
 	}
 };
 
-Distimo = function() {
+Distimo = function () {
 	var self = this,
 		hasInstance = false,
 		VERSION = "2.6";
 
-	self.sdkKey = "";
+	self.publicKey = "";
+	self.privateKey = "";
+	self.eventManager = null;
+
+
+	// -- Lifespan -- //
+
+	// Note: consider using getInstance + init for more apparent singleton structure.
 
 	self.createInstance = function (sdkKey) {
 		if (!hasInstance) {
+			// public key, private key
+			self.publicKey = sdkKey.substring(0, 4);
+			self.privateKey = sdkKey.substring(4);
+			
+			// UUID
+			
+			// device ID
+			
+			// event manager
+			self.eventManager = new EventManager();
+
+			// uncaught exception handler
+			
+			// Mark instantiated
 			hasInstance = true;
-			self.sdkKey = sdkKey;
 			return true;
 		}
 		return false;
@@ -82,10 +102,48 @@ Distimo = function() {
 		return null;
 	};
 
+
+	// -- Version Info -- //
+
 	self.getVersion = function () {
 		return VERSION;
 	};
 
+
+	// -- Event Calls -- //
+
+	self.logUserRegistered = function () {
+		// Get UUID
+		// Then log "UserRegistered"
+	}
+
 };
 
 distimo = new Distimo();
+
+
+// - Event -- //
+
+Event = function (args) {
+	// To be filled; requires: id, name, params, postData, timestamp, checksum, bundleID, appVersion, sdkVersion
+};
+
+EventManager = function () {
+	var self = this,
+		hasInstance = false,
+		INITIAL_DELAY = 1000,
+		MAX_DELAY = 32000;
+
+	self.delay = INITIAL_DELAY;
+	self.eventQueue = [];
+
+	// TODO: sort out public & private methods, and apply closure
+
+	self.sendEvent = function (event) {
+
+	}
+
+	self.storeEvent = function (event) {
+
+	}
+};
