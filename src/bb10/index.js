@@ -14,7 +14,8 @@
 * limitations under the License.
 */
 
-var distimo;
+var distimo,
+	_identity = require("../../lib/identity");
 
 module.exports = {
 	start: function (success, fail, args, env) {
@@ -23,11 +24,11 @@ module.exports = {
 
 		args = JSON.parse(decodeURIComponent(args["input"]));
 		if (args.sdkKey) {
-			success = distimo.createInstance(args.sdkKey);
+			success = distimo.getInstance().start(args.sdkKey, { "uuid": args.uuid, "imei": args.imei });
 		}
 
 		if (success) {
-			result.ok(distimo.getInstance().sdkKey, false);
+			result.ok(distimo.getInstance().debugString(), false);
 		} else {
 			result.error("Please provide a valid SDK Key, you can create one at https://analytics.distimo.com/settings/sdk.", false);
 		}
@@ -64,53 +65,50 @@ Distimo = function () {
 		hasInstance = false,
 		VERSION = "2.6";
 
-	self.publicKey = "";
-	self.privateKey = "";
-	self.eventManager = null;
 
-
-	// -- Lifespan -- //
-
-	// Note: consider using getInstance + init for more apparent singleton structure.
-
-	self.createInstance = function (sdkKey) {
-		if (!hasInstance) {
-			// public key, private key
-			self.publicKey = sdkKey.substring(0, 4);
-			self.privateKey = sdkKey.substring(4);
-			
-			// UUID
-			
-			// device ID
-			
-			// event manager
-			self.eventManager = new EventManager();
-
-			// uncaught exception handler
-			
-			// Mark instantiated
-			hasInstance = true;
-			return true;
-		}
-		return false;
-	}
+	// -- Get Singleton Instance -- //
 
 	self.getInstance = function () {
-		if (hasInstance) {
-			return self;
+		if (!hasInstance) {
+			hasInstance = true;
 		}
-		return null;
+		return self;
 	};
 
+	// -- Distimo Functions -- //
 
-	// -- Version Info -- //
+	var publicKey = "",
+		privateKey = "",
+		uuid = "",
+		imei = "",
+		eventManager = null;
+
+	self.debugString = function () {
+		return publicKey + " " + privateKey + " " + uuid + " " + imei;
+	}
+
+	self.start = function (sdkKey, identity) {
+		// public key, private key
+		publicKey = sdkKey.substring(0, 4);
+		privateKey = sdkKey.substring(4);
+		
+		// UUID
+		uuid = blackberry.identity.uuid;
+
+		// device ID
+		imei = identity.imei;
+		
+		// event manager
+		eventManager = new EventManager();
+
+		// uncaught exception handler
+		
+		return true;
+	}
 
 	self.getVersion = function () {
 		return VERSION;
 	};
-
-
-	// -- Event Calls -- //
 
 	self.logUserRegistered = function () {
 		// Get UUID
