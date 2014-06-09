@@ -14,23 +14,22 @@
 * limitations under the License.
 */
 
-var distimo,
-	_identity = require("../../lib/identity");
+var distimo;
 
 module.exports = {
 	start: function (success, fail, args, env) {
-		var success = false,
+		var error,
 			result = new PluginResult(args, env);
 
 		args = JSON.parse(decodeURIComponent(args["input"]));
 		if (args.sdkKey) {
-			success = distimo.getInstance().start(args.sdkKey, { "uuid": args.uuid, "imei": args.imei });
+			error = distimo.getInstance().start(args.sdkKey);
 		}
 
-		if (success) {
-			result.ok(distimo.getInstance().debugString(), false);
+		if (error) {
+			result.error(error, false);
 		} else {
-			result.error("Please provide a valid SDK Key, you can create one at https://analytics.distimo.com/settings/sdk.", false);
+			result.ok(distimo.getInstance().debugString(), false);
 		}
 	},
 
@@ -84,26 +83,35 @@ Distimo = function () {
 		eventManager = null;
 
 	self.debugString = function () {
-		return publicKey + " " + privateKey + " " + uuid + " " + imei;
+		return "_" + publicKey + " " + privateKey + " " + uuid + " " + imei;
 	}
 
-	self.start = function (sdkKey, identity) {
+	self.start = function (sdkKey) {
 		// public key, private key
+		if (sdkKey.length <= 12) {
+			return "Please provide a valid SDK Key, you can create one at https://analytics.distimo.com/settings/sdk.";
+		}
 		publicKey = sdkKey.substring(0, 4);
 		privateKey = sdkKey.substring(4);
 		
 		// UUID
-		uuid = blackberry.identity.uuid;
+		uuid = Utility.getUUID();
+		if (!uuid) {
+			return "Unable to retrieve device pin.";
+		}
 
 		// device ID
-		imei = identity.imei;
+		imei = Utility.getIMEI();
+		if (!imei) {
+			return "Unable to retrieve IMEI number.";
+		}
 		
 		// event manager
 		eventManager = new EventManager();
 
 		// uncaught exception handler
 		
-		return true;
+		return;
 	}
 
 	self.getVersion = function () {
@@ -118,6 +126,35 @@ Distimo = function () {
 };
 
 distimo = new Distimo();
+
+
+
+// -- Utility Functions -- //
+
+Utility = {
+	getUUID: function () {
+		var str = "";
+		try {
+			str = window.qnx.webplatform.device.devicePin;
+			// TODO: encrypt or hash
+		} catch (e) {
+			return null;
+		}
+		return str;
+	},
+
+	getIMEI: function () {
+		var str = "";
+		try {
+			str = window.qnx.webplatform.device.IMEI;
+			// TODO: encrypt or hash
+		} catch (e) {
+			return null;
+		}
+		return str;
+	}
+};
+
 
 
 // - Event -- //
