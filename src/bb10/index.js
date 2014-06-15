@@ -117,10 +117,26 @@ EventManager = function() {
 		MAX_DELAY = 32000;
 
 	var delay = INITIAL_DELAY,
-		eventQueue = [];
+		busy = false,
+		queue = new Array();
+
+	function nextEvent() {
+		if (queue.length > 0) {
+			var event = queue.shift();
+			// send to https://a.distimo.mobi/e/
+			// callback to timeout(delay, nextEvent())
+		} else {
+			busy = false;
+		}
+	}
 
 	function queueEvent(event) {
-		
+		queue[queue.length] = event;
+
+		if (!busy) {
+			busy = true;
+			nextEvent();
+		}
 	}
 
 	function storeEvent(event) {
@@ -129,12 +145,12 @@ EventManager = function() {
 
 	return {
 		logEvent: function(event) {
-			var isApplicationActive = true;
-			if (isApplicationActive) {
+			// var isApplicationActive = true;
+			// if (isApplicationActive) {
 				queueEvent(event);
-			} else {
-				storeEvent(event);
-			}
+			// } else {
+			// 	storeEvent(event);
+			// }
 		}
 	};
 };
