@@ -27,7 +27,7 @@ module.exports = {
 		if (error) {
 			result.error(error, false);
 		} else {
-			result.ok(distimo.debugString(), false);
+			result.ok(true, false);
 		}
 	},
 
@@ -37,7 +37,9 @@ module.exports = {
 	},
 
 	logUserRegistered: function(success, fail, args, env) {
-
+		var result = new PluginResult(args, env);
+		distimo.logUserRegistered();
+		result.ok(true, false);
 	},
 
 	logExternalPurchaseWithCurrency: function(success, fail, args, env) {
@@ -58,102 +60,190 @@ module.exports = {
 };
 
 var distimo = (function() {
-	var VERSION = "2.6";
+	var VERSION = "2.6",
+		kDistimo = "Distimo",
+		kUserRegistered = "UserRegistered";
+		kStoredEvents = "StoredEvents";
 
-	var publicKey, privateKey, uuid, imei, eventManager;
+	var publicKey, privateKey, uuid, imei, backgroundMode;
+
+	var debugLogger = (function() {
+		return {
+			var logs = [];
+			
+			var add = function(str) {
+				logs[logs.length] = str;
+			}
+			var append = function(str) {
+				logs[log.length - 1] = logs[log.length - 1] + " " + str;
+			}
+		}
+	})();
+
+	var Event = function(name, params, postData) {
+		this.name = name;
+		this.params = params; // id, timestamp, checksum, bundleID, appVersion, sdkVersion
+		this.postData = postData;
+	};
+
+	var eventManager = (function() {
+		var INITIAL_DELAY = 1000,
+			MAX_DELAY = 32000;
+
+		var delay = INITIAL_DELAY,
+			busy = false,
+			queue = new Array();
+
+		function nextEvent() {
+			if (queue.length > 0) {
+				var event = queue.shift();
+				// send to https://a.distimo.mobi/e/
+				// callback to timeout(delay, nextEvent())
+			} else {
+				busy = false;
+			}
+		}
+
+		function queueEvent(event) {
+			queue[queue.length] = event;
+
+			if (!busy) {
+				busy = true;
+				nextEvent();
+			}
+		}
+
+		function storeEvent(event) {
+
+		}
+
+		return {
+			logEvent: function(event) {
+				// if (backgroundMode) {
+				// 	storeEvent(event);
+				// } else {
+					queueEvent(event);
+				// }
+			}
+		};
+	})();
+
+	var storageManager = (function() {
+		var getStorage = function() {
+			if (window.localStorage) {
+				if (!window.localStorage.getItem(kDistimo)) {
+					window.localStorage.setItem(kDistimo, { kStoredEvents: {} });
+				}
+				return window.localStorage.getItem(kDistimo);
+			} else {
+				return false;
+			}
+		}
+
+		return {
+			set: function(key, value) {
+				var distimoStorage = getStorage();
+				if (distimoStorage) {
+					distimoStorage[key] = value;
+					window.localStorage.setItem(kDistimo, distimoStorage);
+				}
+			},
+
+			get: function(key) {
+				var distimoStorage = getStorage();
+				if (distimoStorage) {
+					return distimoStorage[key];
+				}
+			}
+		};
+	})();
 
 	return {
-		debugString: function () {
-			return "new: " + publicKey + " " + privateKey + " " + uuid + " " + imei;
+		debug: function () {
+			var str = "";
+			for (var i = 0; i < debugLogger.logs.length; i ++) {
+				str += debugLogger.logs[i] + "<br />";
+			}
+			str += "Public Key: " + publicKey + "<br />";
+			str += "Private Key: " + privateKey + "<br />";
+			str += "UUID: " + uuid + "<br />";
+			str += "IMEI: " + imei + "<br />";
+
+			return str;
 		},
 
 		start: function(sdkKey) {
+			debugLogger.add("start(" + sdkKey + ")");
+
+			var error;
+
 			// public key, private key
-			if (sdkKey.length <= 12) {
-				return "Please provide a valid SDK Key, you can create one at https://analytics.distimo.com/settings/sdk.";
+			if (sdkKey.length > 12) {
+				publicKey = sdkKey.substring(0, 4);
+				privateKey = sdkKey.substring(4);
+			} else {
+				error = "Please provide a valid SDK Key, you can create one at https://analytics.distimo.com/settings/sdk.";
 			}
-			publicKey = sdkKey.substring(0, 4);
-			privateKey = sdkKey.substring(4);
 			
 			// UUID
 			uuid = Utility.getUUID();
 			if (!uuid) {
-				return "Unable to retrieve device pin.";
+				error = "Unable to retrieve device pin.";
 			}
 
 			// device ID
 			imei = Utility.getIMEI();
 			if (!imei) {
-				return "Unable to retrieve IMEI number.";
+				error = "Unable to retrieve IMEI number.";
 			}
-			
-			// event manager
-			eventManager = new EventManager();
 
-			// uncaught exception handler
+			// TODO: listen to application events
+			//
+			// cordova.addDocumentEventHandler("pause");
+			// cordova.addDocumentEventHandler("resume");
+			//
+			// document.addEventListener("pause", function() {
+			// 	backgroundMode = true;
+			// });
+			// document.addEventListener("resume", function() {
+			// 	backgroundMode = false;
+			// });
+			backgroundMode = false;
 			
-			return;
+			// TODO: uncaught exception handler
+			
+			if (error) {
+				debugLogger.append("fail");
+			} else {
+				debugLogger.append("success");
+			}
+			return error;
 		},
 
 		getVersion: function() {
+			debugLogger.add("getVersion()");
 			return VERSION;
 		},
 
 		logUserRegistered: function() {
-			// Get UUID
-			// Then log "UserRegistered"
+			debugLogger.add("logUserRegistered");
+
+			var registered = storageManager.get(kUserRegistered) === true;
+
+			if (!registered) {
+				var registeredEvent = new Event(kUserRegistered, null, null);
+				eventManager.logEvent(registeredEvent);
+				storageManager.set(kUserRegistered, true);
+				dubugLogger.append("registered");
+				
+			} else {
+				debugLogger.append("already exists");
+			}
 		}
+
+
 	};
 })();
-
-
-
-// - Event Manager -- //
-
-// An event: id, name, params, postData, timestamp, checksum, bundleID, appVersion, sdkVersion	
-
-EventManager = function() {
-	var INITIAL_DELAY = 1000,
-		MAX_DELAY = 32000;
-
-	var delay = INITIAL_DELAY,
-		busy = false,
-		queue = new Array();
-
-	function nextEvent() {
-		if (queue.length > 0) {
-			var event = queue.shift();
-			// send to https://a.distimo.mobi/e/
-			// callback to timeout(delay, nextEvent())
-		} else {
-			busy = false;
-		}
-	}
-
-	function queueEvent(event) {
-		queue[queue.length] = event;
-
-		if (!busy) {
-			busy = true;
-			nextEvent();
-		}
-	}
-
-	function storeEvent(event) {
-
-	}
-
-	return {
-		logEvent: function(event) {
-			// var isApplicationActive = true;
-			// if (isApplicationActive) {
-				queueEvent(event);
-			// } else {
-			// 	storeEvent(event);
-			// }
-		}
-	};
-};
 
 
 
