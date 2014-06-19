@@ -15,6 +15,11 @@
 */
 
 module.exports = {
+	debug: function(success, fail, args, env) {
+		var result = new PluginResult(args, env);
+		result.ok(distimo.debug(), false);
+	},
+
 	start: function(success, fail, args, env) {
 		var error,
 			result = new PluginResult(args, env);
@@ -38,7 +43,9 @@ module.exports = {
 
 	logUserRegistered: function(success, fail, args, env) {
 		var result = new PluginResult(args, env);
-		distimo.logUserRegistered();
+
+		args = JSON.parse(decodeURIComponent(args["input"]));
+		distimo.logUserRegistered(args.callIdentifier);
 		result.ok(true, false);
 	},
 
@@ -61,21 +68,31 @@ module.exports = {
 
 var distimo = (function() {
 	var VERSION = "2.6",
+		DEBUG = true,
 		kDistimo = "Distimo",
 		kUserRegistered = "UserRegistered";
 		kStoredEvents = "StoredEvents";
 
 	var publicKey, privateKey, uuid, imei, backgroundMode;
 
+	var test = 1;
+
 	var debugLogger = (function() {
 		return {
-			var logs = [];
+			logs: [],
 			
-			var add = function(str) {
-				logs[logs.length] = str;
-			}
-			var append = function(str) {
-				logs[log.length - 1] = logs[log.length - 1] + " " + str;
+			add: function(str) {
+				if (DEBUG) {
+					logs[logs.length] = str;
+					test ++;
+				}
+			},
+			
+			append: function(str) {
+				if (DEBUG) {
+					logs[log.length - 1] = logs[log.length - 1] + " " + str;
+					test ++;
+				}
 			}
 		}
 	})();
@@ -92,7 +109,7 @@ var distimo = (function() {
 
 		var delay = INITIAL_DELAY,
 			busy = false,
-			queue = new Array();
+			queue = [];
 
 		function nextEvent() {
 			if (queue.length > 0) {
@@ -118,6 +135,16 @@ var distimo = (function() {
 		}
 
 		return {
+			debug: function() {
+				if (DEBUG) {
+					var str = "";
+					for (var i = 0; i < queue.length; i ++) {
+						str += i + ": " + queue[i].name + "<br />";
+					}
+					return str;
+				}
+			},
+
 			logEvent: function(event) {
 				// if (backgroundMode) {
 				// 	storeEvent(event);
@@ -141,6 +168,15 @@ var distimo = (function() {
 		}
 
 		return {
+			debug: function() {
+				if (DEBUG) {
+					var distimoStorage = getStorage();
+					if (distimoStorage) {
+						return JSON.stringify(distimoStorage, null, 4);
+					}
+				}
+			},
+
 			set: function(key, value) {
 				var distimoStorage = getStorage();
 				if (distimoStorage) {
@@ -159,17 +195,25 @@ var distimo = (function() {
 	})();
 
 	return {
-		debug: function () {
-			var str = "";
-			for (var i = 0; i < debugLogger.logs.length; i ++) {
-				str += debugLogger.logs[i] + "<br />";
-			}
-			str += "Public Key: " + publicKey + "<br />";
-			str += "Private Key: " + privateKey + "<br />";
-			str += "UUID: " + uuid + "<br />";
-			str += "IMEI: " + imei + "<br />";
+		debug: function() {
+			if (DEBUG) {
+				return "TEST: " + test;
 
-			return str;
+				var str = "";
+				for (var i = 0; i < debugLogger.logs.length; i ++) {
+					str += debugLogger.logs[i] + "<br />";
+				}
+				
+				str += "Public Key: " + publicKey + "<br />";
+				str += "Private Key: " + privateKey + "<br />";
+				str += "UUID: " + uuid + "<br />";
+				str += "IMEI: " + imei + "<br />";
+				str += "<br />";
+				str += "Event Queue: " + eventManager.debug() + "<br />";
+				str += "Local Storage: " + storageManager.debug() + "<br />";
+
+				return str;
+			}
 		},
 
 		start: function(sdkKey) {
@@ -225,17 +269,17 @@ var distimo = (function() {
 			return VERSION;
 		},
 
-		logUserRegistered: function() {
-			debugLogger.add("logUserRegistered");
+		logUserRegistered: function(callIdentifier) {
+			debugLogger.add("logUserRegistered(" + callIdentifier + ")");
 
 			var registered = storageManager.get(kUserRegistered) === true;
 
 			if (!registered) {
-				var registeredEvent = new Event(kUserRegistered, null, null);
+				var registeredEvent = new Event(kUserRegistered + callIdentifier, null, null);
 				eventManager.logEvent(registeredEvent);
 				storageManager.set(kUserRegistered, true);
 				dubugLogger.append("registered");
-				
+
 			} else {
 				debugLogger.append("already exists");
 			}
