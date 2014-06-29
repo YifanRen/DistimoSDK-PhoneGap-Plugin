@@ -155,15 +155,16 @@ var distimo = (function() {
 	})();
 
 	var storageManager = (function() {
+		var defaultStorage = JSON.stringify({ kStoredEvents: {} });
+
 		var getStorage = function() {
 			if (window.localStorage) {
 				var item = window.localStorage.getItem(kDistimo);
 				if (item) {
 					return JSON.parse(item);
 				} else {
-					item = { kStoredEvents: {} };
-					window.localStorage.setItem(kDistimo, JSON.stringify(item));
-					return item;
+					window.localStorage.setItem(kDistimo, defaultStorage);
+					return JSON.parse(defaultStorage);
 				}
 			} else {
 				return false;
@@ -181,7 +182,7 @@ var distimo = (function() {
 			},
 
 			clear: function() {
-				window.localStorage.setItem(kDistimo, JSON.stringify({ kStoredEvents: {} }));
+				window.localStorage.setItem(kDistimo, defaultStorage);
 			},
 
 			set: function(key, value) {
