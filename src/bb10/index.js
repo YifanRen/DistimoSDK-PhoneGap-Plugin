@@ -43,7 +43,6 @@ module.exports = {
 
 	logUserRegistered: function(success, fail, args, env) {
 		var result = new PluginResult(args, env);
-
 		args = JSON.parse(decodeURIComponent(args["input"]));
 		distimo.logUserRegistered(args.callIdentifier);
 		result.ok(true, false);
@@ -70,28 +69,28 @@ var distimo = (function() {
 	var VERSION = "2.6",
 		DEBUG = true,
 		kDistimo = "Distimo",
-		kUserRegistered = "UserRegistered";
+		kUserRegistered = "UserRegistered",
 		kStoredEvents = "StoredEvents";
 
 	var publicKey, privateKey, uuid, imei, backgroundMode;
 
-	var test = 1;
-
 	var debugLogger = (function() {
+		var logs = [];
+
 		return {
-			logs: [],
+			getLogs: function() {
+				return logs;
+			},
 			
 			add: function(str) {
 				if (DEBUG) {
 					logs[logs.length] = str;
-					test ++;
 				}
 			},
 			
 			append: function(str) {
 				if (DEBUG) {
-					logs[log.length - 1] = logs[log.length - 1] + " " + str;
-					test ++;
+					logs[logs.length - 1] = logs[logs.length - 1] + "->" + str;
 				}
 			}
 		}
@@ -139,7 +138,7 @@ var distimo = (function() {
 				if (DEBUG) {
 					var str = "";
 					for (var i = 0; i < queue.length; i ++) {
-						str += i + ": " + queue[i].name + "<br />";
+						str += i + ": " + queue[i].name + "\n";
 					}
 					return str;
 				}
@@ -158,10 +157,12 @@ var distimo = (function() {
 	var storageManager = (function() {
 		var getStorage = function() {
 			if (window.localStorage) {
-				if (!window.localStorage.getItem(kDistimo)) {
-					window.localStorage.setItem(kDistimo, { kStoredEvents: {} });
+				var distimoStorage = window.localStorage.getItem(kDistimo);
+				if (!distimoStorage) {
+					distimoStorage = { kStoredEvents: {} };
+					window.localStorage.setItem(kDistimo, distimoStorage);
 				}
-				return window.localStorage.getItem(kDistimo);
+				return distimoStorage;
 			} else {
 				return false;
 			}
@@ -197,20 +198,40 @@ var distimo = (function() {
 	return {
 		debug: function() {
 			if (DEBUG) {
-				return "TEST: " + test;
-
 				var str = "";
-				for (var i = 0; i < debugLogger.logs.length; i ++) {
-					str += debugLogger.logs[i] + "<br />";
+
+				var logs = debugLogger.getLogs();
+				if (logs.length > 0) {
+					str += "\n\n********** Logs **********\n"
+					for (var i = 0; i < logs.length; i ++) {
+						str += logs[i] + "\n";
+					}
+					str += "**************************\n\n\n"
 				}
 				
-				str += "Public Key: " + publicKey + "<br />";
-				str += "Private Key: " + privateKey + "<br />";
-				str += "UUID: " + uuid + "<br />";
-				str += "IMEI: " + imei + "<br />";
-				str += "<br />";
-				str += "Event Queue: " + eventManager.debug() + "<br />";
-				str += "Local Storage: " + storageManager.debug() + "<br />";
+				if (publicKey) {
+					str += "Public Key: " + publicKey + "\n";
+				}
+
+				if (privateKey) {
+					str += "Private Key: " + privateKey + "\n";
+				}
+
+				if (uuid) {
+					str += "UUID: " + uuid + "\n";
+				}
+
+				if (imei) {
+					str += "IMEI: " + imei + "\n";
+				}
+
+				str += "\n\n******* Event Queue *******\n"
+				str += eventManager.debug() + "\n";
+				str += "**************************\n\n\n"
+
+				str += "\n\n****** Local Storage ******\n"
+				str += storageManager.debug() + "\n";
+				str += "**************************\n\n\n"
 
 				return str;
 			}
@@ -218,7 +239,7 @@ var distimo = (function() {
 
 		start: function(sdkKey) {
 			debugLogger.add("start(" + sdkKey + ")");
-
+			
 			var error;
 
 			// public key, private key
@@ -278,17 +299,14 @@ var distimo = (function() {
 				var registeredEvent = new Event(kUserRegistered + callIdentifier, null, null);
 				eventManager.logEvent(registeredEvent);
 				storageManager.set(kUserRegistered, true);
-				dubugLogger.append("registered");
+				debugLogger.append("registered");
 
 			} else {
 				debugLogger.append("already exists");
 			}
 		}
-
-
 	};
 })();
-
 
 
 // -- Utility Functions -- //
