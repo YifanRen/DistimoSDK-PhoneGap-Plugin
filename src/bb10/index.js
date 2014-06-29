@@ -125,7 +125,7 @@ var distimo = (function() {
 
 			if (!busy) {
 				busy = true;
-				nextEvent();
+				// nextEvent();
 			}
 		}
 
@@ -157,12 +157,14 @@ var distimo = (function() {
 	var storageManager = (function() {
 		var getStorage = function() {
 			if (window.localStorage) {
-				var distimoStorage = window.localStorage.getItem(kDistimo);
-				if (!distimoStorage) {
-					distimoStorage = { kStoredEvents: {} };
-					window.localStorage.setItem(kDistimo, distimoStorage);
+				var item = window.localStorage.getItem(kDistimo);
+				if (item) {
+					return JSON.parse(item);
+				} else {
+					item = { kStoredEvents: {} };
+					window.localStorage.setItem(kDistimo, JSON.stringify(item));
+					return item;
 				}
-				return distimoStorage;
 			} else {
 				return false;
 			}
@@ -178,11 +180,15 @@ var distimo = (function() {
 				}
 			},
 
+			clear: function() {
+				window.localStorage.setItem(kDistimo, JSON.stringify({ kStoredEvents: {} }));
+			},
+
 			set: function(key, value) {
 				var distimoStorage = getStorage();
 				if (distimoStorage) {
 					distimoStorage[key] = value;
-					window.localStorage.setItem(kDistimo, distimoStorage);
+					window.localStorage.setItem(kDistimo, JSON.stringify(distimoStorage));
 				}
 			},
 
@@ -274,6 +280,10 @@ var distimo = (function() {
 			// 	backgroundMode = false;
 			// });
 			backgroundMode = false;
+
+			if (DEBUG) {
+				storageManager.clear();
+			}
 			
 			// TODO: uncaught exception handler
 			
