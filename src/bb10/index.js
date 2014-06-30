@@ -43,25 +43,36 @@ module.exports = {
 
 	logUserRegistered: function(success, fail, args, env) {
 		var result = new PluginResult(args, env);
-		args = JSON.parse(decodeURIComponent(args["input"]));
-		distimo.logUserRegistered(args.callIdentifier);
+		distimo.logUserRegistered();
 		result.ok(true, false);
 	},
 
 	logExternalPurchaseWithCurrency: function(success, fail, args, env) {
-
+		// var result = new PluginResult(args, env);
+		// args = JSON.parse(decodeURIComponent(args["input"]));
+		// distimo.logExternalPurchaseWithCurrency(args.productID, args.currencyCode, args.price, args.quantity);
+		// result.ok(true, false);
 	},
 
 	logBannerClick: function(success, fail, args, env) {
-
+		// var result = new PluginResult(args, env);
+		// args = JSON.parse(decodeURIComponent(args["input"]));
+		// distimo.logBannerClick(args.publisher);
+		// result.ok(true, false);
 	},
 
 	setUserID: function(success, fail, args, env) {
-
+		// var result = new PluginResult(args, env);
+		// args = JSON.parse(decodeURIComponent(args["input"]));
+		// distimo.setUserID(args.userID);
+		// result.ok(true, false);
 	},
 
 	openAppLink: function(success, fail, args, env) {
-
+		// var result = new PluginResult(args, env);
+		// args = JSON.parse(decodeURIComponent(args["input"]));
+		// distimo.openAppLink(args.applinkHandle, args.campaignHandle);
+		// result.ok(true, false);
 	}
 };
 
@@ -97,9 +108,38 @@ var distimo = (function() {
 	})();
 
 	var Event = function(name, params, postData) {
-		this.name = name;
-		this.params = params; // id, timestamp, checksum, bundleID, appVersion, sdkVersion
-		this.postData = postData;
+		var self = this;
+
+		self.name = name; // An event must have a name
+		self.params = params; // { id, timestamp, checksum, bundleID, appVersion, sdkVersion }
+		self.postData = postData;
+
+		// self.bundleID = 
+		// self.appVersion = 
+		self.sdkVersion = VERSION;
+		self.timestamp = new Date().getTime();
+
+		self.urlParamString = function() {
+			var result = self.urlParamPayload();
+			result += "&ct=" + new Date().getTime();
+			// result += "&cs=" + // get checksum
+		};
+
+		self.urlParamPayload = function() {
+			var result = "en=" + self.name;
+			
+			result += "&lt=" + self.timestamp;
+			// result += "&av=" + self.appVersion;
+			result += "&sv=" + self.sdkVersion;
+			// result += "&bu=" + self.bundleID;
+			result += "&oi=" + publicKey;
+			result += "&uu=" + uuid;
+			result += "&hu=" + imei;
+			// result += "&es=" + "a";
+			// result += "&ep=" + // encode all params
+
+			return result;
+		};
 	};
 
 	var eventManager = (function() {
@@ -112,20 +152,39 @@ var distimo = (function() {
 
 		function nextEvent() {
 			if (queue.length > 0) {
-				var event = queue.shift();
-				// send to https://a.distimo.mobi/e/
-				// callback to timeout(delay, nextEvent())
+				var event = queue[0];
+
+				var xhr = new XMLHttpRequest();
+				xhr.open("POST", "https://a.distimo.mobi/e/", true);
+				xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+				xhr.onreadystatechange = function() {
+					if(xhr.readyState == 4) {
+						if (xhr.status == 200) {
+							queue.shift();
+							delay = INITIAL_DELAY;
+							setTimeout(nextEvent, delay);
+						} else {
+							if (delay < MAX_DELAY) {
+								delay *= 2;
+							}
+							setTimeout(nextEvent, delay);
+						}
+					}
+				};
+				//xhr.send(event);
 			} else {
 				busy = false;
 			}
 		}
 
 		function queueEvent(event) {
-			queue[queue.length] = event;
+			if (event) {
+				queue[queue.length] = event;
+			}
 
 			if (!busy) {
 				busy = true;
-				// nextEvent();
+				nextEvent();
 			}
 		}
 
@@ -301,13 +360,13 @@ var distimo = (function() {
 			return VERSION;
 		},
 
-		logUserRegistered: function(callIdentifier) {
-			debugLogger.add("logUserRegistered(" + callIdentifier + ")");
+		logUserRegistered: function() {
+			debugLogger.add("logUserRegistered()");
 
 			var registered = storageManager.get(kUserRegistered) === true;
 
 			if (!registered) {
-				var registeredEvent = new Event(kUserRegistered + callIdentifier, null, null);
+				var registeredEvent = new Event(kUserRegistered, null, null);
 				eventManager.logEvent(registeredEvent);
 				storageManager.set(kUserRegistered, true);
 				debugLogger.append("registered");
