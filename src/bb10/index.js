@@ -14,6 +14,8 @@
 * limitations under the License.
 */
 
+var _config = require("./../../lib/config");
+
 module.exports = {
 	debug: function(success, fail, args, env) {
 		var result = new PluginResult(args, env);
@@ -110,35 +112,64 @@ var distimo = (function() {
 	var Event = function(name, params, postData) {
 		var self = this;
 
+		// self.id ?
 		self.name = name; // An event must have a name
 		self.params = params; // { id, timestamp, checksum, bundleID, appVersion, sdkVersion }
 		self.postData = postData;
 
-		// self.bundleID = 
-		// self.appVersion = 
+		self.bundleID = _config.id;
+		self.appVersion = _config.version;
 		self.sdkVersion = VERSION;
 		self.timestamp = new Date().getTime();
 
-		self.urlParamString = function() {
-			var result = self.urlParamPayload();
-			result += "&ct=" + new Date().getTime();
-			// result += "&cs=" + // get checksum
-		};
+		self.encodedParams = encodeURIComponent((function() {
+			var result = "";
+			for (var key in self.params) {
+				var value = encodeURIComponent(self.params[key]);
+				key = encodeURIComponent(key);
+				if (result.length > 0) {
+					result += ";";
+				}
+				result += key + "=" + value;
+			}
+			
+			return result;
+		})());
 
-		self.urlParamPayload = function() {
+		self.urlParamPayload = (function() {
 			var result = "en=" + self.name;
 			
 			result += "&lt=" + self.timestamp;
-			// result += "&av=" + self.appVersion;
+			result += "&av=" + self.appVersion;
 			result += "&sv=" + self.sdkVersion;
-			// result += "&bu=" + self.bundleID;
+			result += "&bu=" + self.bundleID;
 			result += "&oi=" + publicKey;
 			result += "&uu=" + uuid;
 			result += "&hu=" + imei;
-			// result += "&es=" + "a";
-			// result += "&ep=" + // encode all params
+			result += "&es=" + "b"; // ask Distimo team for this
+			result += "&ep=" + self.encodedParams;
 
 			return result;
+		})();
+
+		self.checksum = (function() {
+			var getPayload = Utility.md5(self.urlParamPayload);
+			
+			var payload;
+			if (self.postData) {
+				var postPayload = Utility.md5(self.postData);
+				payload = Utility.md5(getPayload + postPayload);
+			} else {
+				payload = getPayload;
+			}
+			
+			return Utility.md5(payload + privateKey);
+		})();
+
+		self.urlParamString = function() {
+			var result = self.urlParamPayload;
+			result += "&ct=" + new Date().getTime();
+			result += "&cs=" + self.checksum;
 		};
 	};
 
@@ -291,6 +322,13 @@ var distimo = (function() {
 					str += "IMEI: " + imei + "\n";
 				}
 
+				if (_config) {
+					str += "ID: " + _config.id + "\n";
+					str += "Version: " + _config.version + "\n";
+				}
+
+				str += "MD5(hello): " + Utility.md5("hello") + "\n";
+
 				str += "\n\n******* Event Queue *******\n"
 				str += eventManager.debug() + "\n";
 				str += "**************************\n\n\n"
@@ -402,5 +440,10 @@ Utility = {
 			return null;
 		}
 		return str;
+	},
+
+	md5: function(str) {
+		return str;
+		// return CryptoJS.MD5(str);
 	}
 };
