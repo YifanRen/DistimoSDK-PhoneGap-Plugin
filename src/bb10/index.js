@@ -15,6 +15,7 @@
 */
 
 var _config = require("./../../lib/config");
+var _crypto = require("./md5");
 
 module.exports = {
 	debug: function(success, fail, args, env) {
@@ -112,9 +113,9 @@ var distimo = (function() {
 	var Event = function(name, params, postData) {
 		var self = this;
 
-		// self.id ?
+		// self.id required?
 		self.name = name; // An event must have a name
-		self.params = params; // { id, timestamp, checksum, bundleID, appVersion, sdkVersion }
+		self.params = params;
 		self.postData = postData;
 
 		self.bundleID = _config.id;
@@ -122,7 +123,7 @@ var distimo = (function() {
 		self.sdkVersion = VERSION;
 		self.timestamp = new Date().getTime();
 
-		self.encodedParams = encodeURIComponent((function() {
+		self.encodedParams = encodeURIComponent((function() { // encodeURI? encodeURIComponent?
 			var result = "";
 			for (var key in self.params) {
 				var value = encodeURIComponent(self.params[key]);
@@ -327,15 +328,31 @@ var distimo = (function() {
 					str += "Version: " + _config.version + "\n";
 				}
 
-				str += "MD5(hello): " + Utility.md5("hello") + "\n";
+				str += "MD5(hello): " + CryptoJS.MD5("hello") + "\n";
+				
+				// if (CryptoJS) {
+				// 	str += "CryptoJS: " + CryptoJS + "\n";
+				// }
 
-				str += "\n\n******* Event Queue *******\n"
+				// if (_crypto) {
+				// 	str += "SAY YES\n";
+				// 	str += "_crypto: " + _crypto + "\n";
+				// 	str += "_crypto.CryptoJS: " + _crypto.CryptoJS + "\n";
+				// 	str += "_crypto.CryptoJS.MD5: " + _crypto.CryptoJS.MD5 + "\n";
+				// 	str += "_crypto.MD5: " + _crypto.MD5 + "\n";
+				// }
+
+				// if (MD5) {
+				// 	str += "MD5: " + MD5 + "\n";
+				// }
+
+				str += "\n\n******* Event Queue *******\n";
 				str += eventManager.debug() + "\n";
-				str += "**************************\n\n\n"
+				str += "**************************\n\n\n";
 
-				str += "\n\n****** Local Storage ******\n"
+				str += "\n\n****** Local Storage ******\n";
 				str += storageManager.debug() + "\n";
-				str += "**************************\n\n\n"
+				str += "**************************\n\n\n";
 
 				return str;
 			}
@@ -444,6 +461,7 @@ Utility = {
 
 	md5: function(str) {
 		return str;
-		// return CryptoJS.MD5(str);
+		// return CryptoJS ? JSON.stringify(CryptoJS) : "NO";
+		// return _crypto.CryptoJS.MD5(str);
 	}
 };
