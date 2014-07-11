@@ -15,7 +15,6 @@
 */
 
 var _config = require("./../../lib/config");
-var _crypto = require("./md5");
 
 module.exports = {
 	debug: function(success, fail, args, env) {
@@ -107,7 +106,7 @@ var distimo = (function() {
 					logs[logs.length - 1] = logs[logs.length - 1] + "->" + str;
 				}
 			}
-		}
+		};
 	})();
 
 	var Event = function(name, params, postData) {
@@ -328,24 +327,8 @@ var distimo = (function() {
 					str += "Version: " + _config.version + "\n";
 				}
 
-				str += "MD5(hello): " + CryptoJS.MD5("hello") + "\n";
+				str += "MD5(hello): " + Utility.md5("hello") + "\n";
 				
-				// if (CryptoJS) {
-				// 	str += "CryptoJS: " + CryptoJS + "\n";
-				// }
-
-				// if (_crypto) {
-				// 	str += "SAY YES\n";
-				// 	str += "_crypto: " + _crypto + "\n";
-				// 	str += "_crypto.CryptoJS: " + _crypto.CryptoJS + "\n";
-				// 	str += "_crypto.CryptoJS.MD5: " + _crypto.CryptoJS.MD5 + "\n";
-				// 	str += "_crypto.MD5: " + _crypto.MD5 + "\n";
-				// }
-
-				// if (MD5) {
-				// 	str += "MD5: " + MD5 + "\n";
-				// }
-
 				str += "\n\n******* Event Queue *******\n";
 				str += eventManager.debug() + "\n";
 				str += "**************************\n\n\n";
@@ -437,6 +420,8 @@ var distimo = (function() {
 // -- Utility Functions -- //
 
 Utility = {
+	gseCrypto: null,
+
 	getUUID: function() {
 		var str = "";
 		try {
@@ -460,8 +445,18 @@ Utility = {
 	},
 
 	md5: function(str) {
-		return str;
-		// return CryptoJS ? JSON.stringify(CryptoJS) : "NO";
-		// return _crypto.CryptoJS.MD5(str);
+		if (this.gseCrypto === null) {
+			this.gseCrypto = new JNEXT.GSECrypto();
+		}
+
+		var input = {
+				"alg" : "md5",
+				"input" : {
+					"b64" : btoa(str)
+				}
+			};
+		var output = this.gseCrypto.getInstance().hash(null, input);
+		output = JSON.parse(output);
+		return output["output"]["hex"];
 	}
 };
