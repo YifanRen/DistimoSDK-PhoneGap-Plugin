@@ -14,7 +14,8 @@
 * limitations under the License.
 */
 
-var _config = require("./../../lib/config");
+var _config = require("./../../lib/config"),
+	_appEvents = require("./../../lib/events/applicationEvents");
 
 module.exports = {
 	debug: function(success, fail, args, env) {
@@ -85,7 +86,7 @@ var distimo = (function() {
 		kUserRegistered = "UserRegistered",
 		kStoredEvents = "StoredEvents";
 
-	var publicKey, privateKey, uuid, imei, backgroundMode;
+	var publicKey, privateKey, uuid, imei;
 
 	var debugLogger = (function() {
 		var logs = [];
@@ -179,14 +180,36 @@ var distimo = (function() {
 
 		var delay = INITIAL_DELAY,
 			busy = false,
+			queue = [],
+			backgroundMode = false;
+
+		_appEvents.addEventListener("inactive", function() {
+			backgroundMode = true;
+
+			storageManager.set(kStoredEvents, queue);
 			queue = [];
+		});
+		_appEvents.addEventListener("active", function() {
+			backgroundMode = false;
+
+			queue = storageManager.get(kStoredEvents);
+			storageManager.set(kStoredEvents, []);
+			queueEvent(/* deliberately passing no parameter */);
+		});
+
+		var n = 0;
+		setInterval(function() {
+			storageManager.set("kTest"+n, backgroundMode);
+			n ++;
+		}, 3000);
 
 		function nextEvent() {
 			if (queue.length > 0) {
 				var event = queue[0];
+				var urlString = "https://a.distimo.mobi/e/?" + event.urlParamString();
 
 				var xhr = new XMLHttpRequest();
-				xhr.open("POST", "https://a.distimo.mobi/e/", true);
+				xhr.open("POST", urlString, true);
 				xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
 				xhr.onreadystatechange = function() {
 					if(xhr.readyState == 4) {
@@ -202,7 +225,7 @@ var distimo = (function() {
 						}
 					}
 				};
-				//xhr.send(event);
+				// xhr.send(postData);
 			} else {
 				busy = false;
 			}
@@ -220,7 +243,10 @@ var distimo = (function() {
 		}
 
 		function storeEvent(event) {
-
+			var storedEvents = storageManager.get(kStoredEvents);
+			if (storedEvents !== undefined) {
+				storedEvents[storedEvents.length] = event;
+			}
 		}
 
 		return {
@@ -235,17 +261,18 @@ var distimo = (function() {
 			},
 
 			logEvent: function(event) {
-				// if (backgroundMode) {
-				// 	storeEvent(event);
-				// } else {
+				// TODO: call storeEvent unconditionally so that no log is lost upon app crash
+				if (backgroundMode) {
+					storeEvent(event);
+				} else {
 					queueEvent(event);
-				// }
+				}
 			}
 		};
 	})();
 
 	var storageManager = (function() {
-		var defaultStorage = JSON.stringify({ kStoredEvents: {} });
+		var defaultStorage = JSON.stringify({ kStoredEvents: [] });
 
 		var getStorage = function() {
 			if (window.localStorage) {
@@ -366,21 +393,17 @@ var distimo = (function() {
 				error = "Unable to retrieve IMEI number.";
 			}
 
-			// TODO: listen to application events
-			//
-			// cordova.addDocumentEventHandler("pause");
-			// cordova.addDocumentEventHandler("resume");
-			//
-			// document.addEventListener("pause", function() {
+			// listen to application events
+			// _appEvents.addEventListener("inactive", function() {
 			// 	backgroundMode = true;
 			// });
-			// document.addEventListener("resume", function() {
+			// _appEvents.addEventListener("active", function() {
 			// 	backgroundMode = false;
 			// });
-			backgroundMode = false;
+			// backgroundMode = false;
 
 			if (DEBUG) {
-				storageManager.clear();
+				// storageManager.clear();
 			}
 			
 			// TODO: uncaught exception handler
