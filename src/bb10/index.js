@@ -65,10 +65,10 @@ module.exports = {
 	},
 
 	setUserID: function(success, fail, args, env) {
-		// var result = new PluginResult(args, env);
-		// args = JSON.parse(decodeURIComponent(args["input"]));
-		// distimo.setUserID(args.userID);
-		// result.ok(true, false);
+		var result = new PluginResult(args, env);
+		args = JSON.parse(decodeURIComponent(args["input"]));
+		distimo.setUserID(args.userID);
+		result.ok(true, false);
 	},
 
 	openAppLink: function(success, fail, args, env) {
@@ -435,6 +435,16 @@ var distimo = (function() {
 			} else {
 				debugLogger.append("already exists");
 			}
+		},
+
+		setUserID: function(userID) {
+			debugLogger.add("setUserID(" + userID + ")");
+
+			// skipping validation logic for now
+			var userIDEvent = new Event("UserID", userID, null);
+			eventManager.logEvent(userIDEvent);
+
+			debugLogger.append("sent");
 		}
 	};
 })();
@@ -449,22 +459,20 @@ Utility = {
 		var str = "";
 		try {
 			str = window.qnx.webplatform.device.devicePin;
-			// TODO: encrypt or hash
 		} catch (e) {
 			return null;
 		}
-		return str;
+		return Utility.md5(str);
 	},
 
 	getIMEI: function() {
 		var str = "";
 		try {
 			str = window.qnx.webplatform.device.IMEI;
-			// TODO: encrypt or hash
 		} catch (e) {
 			return null;
 		}
-		return str;
+		return Utility.md5(str);
 	},
 
 	md5: function(str) {
