@@ -171,6 +171,7 @@ var distimo = (function() {
 			var result = self.urlParamPayload;
 			result += "&ct=" + new Date().getTime();
 			result += "&cs=" + self.checksum;
+			return result;
 		};
 	};
 
@@ -225,7 +226,8 @@ var distimo = (function() {
 						}
 					}
 				};
-				// xhr.send(postData);
+				debugLogger.add("POST: " + urlString);
+				xhr.send(postData);
 			} else {
 				busy = false;
 			}
@@ -443,8 +445,6 @@ var distimo = (function() {
 			// skipping validation logic for now
 			var userIDEvent = new Event("UserID", userID, null);
 			eventManager.logEvent(userIDEvent);
-
-			debugLogger.append("sent");
 		}
 	};
 })();
