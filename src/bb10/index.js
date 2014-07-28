@@ -184,32 +184,21 @@ var distimo = (function() {
 
 		var delay = INITIAL_DELAY,
 			busy = false,
-			queue = [],
 			backgroundMode = false;
 
 		_appEvents.addEventListener("inactive", function() {
 			backgroundMode = true;
-
-			storageManager.set(kStoredEvents, queue);
-			queue = [];
 		});
+
 		_appEvents.addEventListener("active", function() {
 			backgroundMode = false;
-
-			queue = storageManager.get(kStoredEvents);
-			storageManager.set(kStoredEvents, []);
-			queueEvent(/* deliberately passing no parameter */);
+			trigger();
 		});
 
-		// var n = 0;
-		// setInterval(function() {
-		// 	storageManager.set("kTest"+n, backgroundMode);
-		// 	n ++;
-		// }, 3000);
-
-		function nextEvent() {
-			if (queue.length > 0) {
-				var event = queue[0];
+		function sendEvent() {
+			var storedEvents = storageManager.get(kStoredEvents);
+			if (!backgroundMode && storedEvents !== undefined && storedEvents.length > 0) {
+				var event = storedEvents[0];
 				var urlString = "https://a.distimo.mobi/e/?" + event.urlParamString();
 
 				var xhr = new XMLHttpRequest();
@@ -218,14 +207,14 @@ var distimo = (function() {
 				xhr.onreadystatechange = function() {
 					if(xhr.readyState == 4) {
 						if (xhr.status == 200) {
-							queue.shift();
+							dequeueEvent();
 							delay = INITIAL_DELAY;
-							setTimeout(nextEvent, delay);
+							setTimeout(sendEvent, delay);
 						} else {
 							if (delay < MAX_DELAY) {
 								delay *= 2;
 							}
-							setTimeout(nextEvent, delay);
+							setTimeout(sendEvent, delay);
 						}
 					}
 				};
@@ -236,41 +225,50 @@ var distimo = (function() {
 			}
 		}
 
-		function queueEvent(event) {
+		function enqueueEvent(event) {
 			if (event) {
-				queue[queue.length] = event;
-			}
-
-			if (!busy) {
-				busy = true;
-				nextEvent();
+				var storedEvents = storageManager.get(kStoredEvents);
+				if (storedEvents !== undefined) {
+					storedEvents[storedEvents.length] = event;
+					storageManager.set(kStoredEvents, storedEvents);
+				}
 			}
 		}
 
-		function storeEvent(event) {
+		function dequeueEvent() {
 			var storedEvents = storageManager.get(kStoredEvents);
-			if (storedEvents !== undefined) {
-				storedEvents[storedEvents.length] = event;
+			if (storedEvents !== undefined && storedEvents.length > 0) {
+				storedEvents.shift();
+				storageManager.set(kStoredEvents, storedEvents);
+			}
+		}
+
+		function trigger() {
+			if (!busy) {
+				busy = true;
+				sendEvent();
 			}
 		}
 
 		return {
 			debug: function() {
 				if (DEBUG) {
-					var str = "";
-					for (var i = 0; i < queue.length; i ++) {
-						str += i + ": " + queue[i].name + "\n";
+					var storedEvents = storageManager.get(kStoredEvents);
+					if (storedEvents !== undefined) {
+						var str = "";
+						for (var i = 0; i < storedEvents.length; i ++) {
+							str += i + ": " + storedEvents[i].name + "\n";
+						}
+						return str;
 					}
-					return str;
 				}
 			},
 
 			logEvent: function(event) {
-				// TODO: call storeEvent unconditionally so that no log is lost upon app crash
-				if (backgroundMode) {
-					storeEvent(event);
-				} else {
-					queueEvent(event);
+				enqueueEvent(event);
+
+				if (!backgroundMode) {
+					trigger();	
 				}
 			}
 		};
