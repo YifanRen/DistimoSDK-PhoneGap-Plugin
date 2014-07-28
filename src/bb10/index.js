@@ -51,17 +51,17 @@ module.exports = {
 	},
 
 	logExternalPurchaseWithCurrency: function(success, fail, args, env) {
-		// var result = new PluginResult(args, env);
-		// args = JSON.parse(decodeURIComponent(args["input"]));
-		// distimo.logExternalPurchaseWithCurrency(args.productID, args.currencyCode, args.price, args.quantity);
-		// result.ok(true, false);
+		var result = new PluginResult(args, env);
+		args = JSON.parse(decodeURIComponent(args["input"]));
+		distimo.logExternalPurchaseWithCurrency(args.productID, args.currencyCode, args.price, args.quantity);
+		result.ok(true, false);
 	},
 
 	logBannerClick: function(success, fail, args, env) {
-		// var result = new PluginResult(args, env);
-		// args = JSON.parse(decodeURIComponent(args["input"]));
-		// distimo.logBannerClick(args.publisher);
-		// result.ok(true, false);
+		var result = new PluginResult(args, env);
+		args = JSON.parse(decodeURIComponent(args["input"]));
+		distimo.logBannerClick(args.publisher);
+		result.ok(true, false);
 	},
 
 	setUserID: function(success, fail, args, env) {
@@ -84,6 +84,8 @@ var distimo = (function() {
 		DEBUG = true,
 		kDistimo = "Distimo",
 		kUserRegistered = "UserRegistered",
+		kExternalPurchase = "ExternalPurchase",
+		kBannerClick = "BannerClick",
 		kUserID = "UserID",
 		kStoredEvents = "StoredEvents";
 
@@ -433,6 +435,30 @@ var distimo = (function() {
 			}
 		},
 
+		logExternalPurchaseWithCurrency: function(productID, currency, price, quantity) {
+			debugLogger.add("logExternalPurchaseWithCurrency(" + productID + ", " + currency + ", " + price + ", " + quantity + ")");
+
+			var params = {};
+			params["productID"] = productID;
+			params["currency"] = currency;
+			params["price"] = price;
+			params["quantity"] = quantity;
+
+			var purchaseEvent = new Event(kExternalPurchase, params, null);
+			eventManager.logEvent(purchaseEvent);
+
+			debugLogger.append("sent");
+		},
+
+		logBannerClick: function(publisher) {
+			debugLogger.add("logBannerClick(" + publisher + ")");
+
+			var bannerEvent = new Event(kBannerClick, {"publisher": publisher}, null);
+			eventManager.logEvent(bannerEvent);
+
+			debugLogger.append("sent");
+		},
+
 		setUserID: function(newUserID) {
 			debugLogger.add("setUserID(" + newUserID + ")");
 
@@ -448,10 +474,11 @@ var distimo = (function() {
 			var storedUserID = storageManager.get(kUserID);
 
 			if (isStringEmpty(storedUserID) || newUserID != storedUserID) {
-				var userIDEvent = new Event("UserID", {"id" : newUserID}, null);
+				var userIDEvent = new Event(kUserID, {"id" : newUserID}, null);
 				eventManager.logEvent(userIDEvent);
 				storageManager.set(kUserID, newUserID);
 				debugLogger.append("new user id set");
+
 			} else {
 				debugLogger.append("already set as " + newUserID);
 			}
