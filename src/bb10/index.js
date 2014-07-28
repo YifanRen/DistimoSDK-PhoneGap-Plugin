@@ -84,6 +84,7 @@ var distimo = (function() {
 		DEBUG = true,
 		kDistimo = "Distimo",
 		kUserRegistered = "UserRegistered",
+		kUserID = "UserID",
 		kStoredEvents = "StoredEvents";
 
 	var publicKey, privateKey, uuid, imei;
@@ -198,11 +199,11 @@ var distimo = (function() {
 			queueEvent(/* deliberately passing no parameter */);
 		});
 
-		var n = 0;
-		setInterval(function() {
-			storageManager.set("kTest"+n, backgroundMode);
-			n ++;
-		}, 3000);
+		// var n = 0;
+		// setInterval(function() {
+		// 	storageManager.set("kTest"+n, backgroundMode);
+		// 	n ++;
+		// }, 3000);
 
 		function nextEvent() {
 			if (queue.length > 0) {
@@ -226,8 +227,8 @@ var distimo = (function() {
 						}
 					}
 				};
-				debugLogger.add("POST: " + urlString);
-				xhr.send(postData);
+				// debugLogger.add("POST: " + urlString);
+				// xhr.send(postData);
 			} else {
 				busy = false;
 			}
@@ -274,7 +275,9 @@ var distimo = (function() {
 	})();
 
 	var storageManager = (function() {
-		var defaultStorage = JSON.stringify({ kStoredEvents: [] });
+		var defaultStorage = {};
+		defaultStorage[kStoredEvents] = [];
+		defaultStorage = JSON.stringify(defaultStorage);
 
 		var getStorage = function() {
 			if (window.localStorage) {
@@ -395,15 +398,6 @@ var distimo = (function() {
 				error = "Unable to retrieve IMEI number.";
 			}
 
-			// listen to application events
-			// _appEvents.addEventListener("inactive", function() {
-			// 	backgroundMode = true;
-			// });
-			// _appEvents.addEventListener("active", function() {
-			// 	backgroundMode = false;
-			// });
-			// backgroundMode = false;
-
 			if (DEBUG) {
 				// storageManager.clear();
 			}
@@ -439,12 +433,28 @@ var distimo = (function() {
 			}
 		},
 
-		setUserID: function(userID) {
-			debugLogger.add("setUserID(" + userID + ")");
+		setUserID: function(newUserID) {
+			debugLogger.add("setUserID(" + newUserID + ")");
 
-			// skipping validation logic for now
-			var userIDEvent = new Event("UserID", userID, null);
-			eventManager.logEvent(userIDEvent);
+			var isStringEmpty = function(str) {
+				return (!newUserID || newUserID.length === 0);
+			};
+
+			if (isStringEmpty(newUserID)) {
+				debugLogger.append("empty");
+				return;
+			}
+
+			var storedUserID = storageManager.get(kUserID);
+
+			if (isStringEmpty(storedUserID) || newUserID != storedUserID) {
+				var userIDEvent = new Event("UserID", {"id" : newUserID}, null);
+				eventManager.logEvent(userIDEvent);
+				storageManager.set(kUserID, newUserID);
+				debugLogger.append("new user id set");
+			} else {
+				debugLogger.append("already set as " + newUserID);
+			}
 		}
 	};
 })();
