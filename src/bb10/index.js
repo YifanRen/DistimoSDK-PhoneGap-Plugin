@@ -27,9 +27,9 @@ module.exports = {
 		var error,
 			result = new PluginResult(args, env);
 
-		args = JSON.parse(decodeURIComponent(args["input"]));
-		if (args.sdkKey) {
-			error = distimo.start(args.sdkKey);
+		var sdkKey = JSON.parse(decodeURIComponent(args[0]));
+		if (sdkKey) {
+			error = distimo.start(sdkKey);
 		}
 
 		if (error) {
@@ -52,30 +52,37 @@ module.exports = {
 
 	logExternalPurchaseWithCurrency: function(success, fail, args, env) {
 		var result = new PluginResult(args, env);
-		args = JSON.parse(decodeURIComponent(args["input"]));
-		distimo.logExternalPurchaseWithCurrency(args.productID, args.currencyCode, args.price, args.quantity);
+
+		// args = [productID, currencyCode, price, quantity];
+		var productID = JSON.parse(decodeURIComponent(args[0])),
+		    currencyCode = JSON.parse(decodeURIComponent(args[1])),
+		    price = JSON.parse(decodeURIComponent(args[2])),
+		    quantity = JSON.parse(decodeURIComponent(args[3]));
+
+		distimo.logExternalPurchaseWithCurrency(productID, currencyCode, price, quantity);
 		result.ok(true, false);
 	},
 
 	logBannerClick: function(success, fail, args, env) {
 		var result = new PluginResult(args, env);
-		args = JSON.parse(decodeURIComponent(args["input"]));
-		distimo.logBannerClick(args.publisher);
+		var publisher = JSON.parse(decodeURIComponent(args[0]));
+		distimo.logBannerClick(publisher);
 		result.ok(true, false);
 	},
 
 	setUserID: function(success, fail, args, env) {
 		var result = new PluginResult(args, env);
-		args = JSON.parse(decodeURIComponent(args["input"]));
-		distimo.setUserID(args.userID);
+		var userID = JSON.parse(decodeURIComponent(args[0]));
+		distimo.setUserID(userID);
 		result.ok(true, false);
 	},
 
 	openAppLink: function(success, fail, args, env) {
-		// var result = new PluginResult(args, env);
-		// args = JSON.parse(decodeURIComponent(args["input"]));
-		// distimo.openAppLink(args.applinkHandle, args.campaignHandle);
-		// result.ok(true, false);
+		var result = new PluginResult(args, env);
+		var applinkHandle = JSON.parse(decodeURIComponent(args[0])),
+		    campaignHandle = JSON.parse(decodeURIComponent(args[1]));
+		distimo.openAppLink(applinkHandle, campaignHandle, success, fail);
+		result.ok(true, false);
 	}
 };
 

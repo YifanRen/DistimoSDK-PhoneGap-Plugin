@@ -112,4 +112,28 @@
 
     </platform>
     
+    <!-- blackberry10 -->
+    <platform name="blackberry10">
+
+        <!-- Plugin specification in config.xml -->
+        <config-file target="www/config.xml" parent="/widget">
+            <feature name="DistimoSDK">
+                <param name="blackberry-package" value="com.distimo.sdk.cordova" />
+            </feature>
+        </config-file>
+
+        <!-- DistimoSDK cordova plugin src file -->
+        <source-file src="src/bb10/index.js" target-dir="DistimoSDK" />
+
+        <!-- device info permission -->
+        <config-file target="www/config.xml" parent="/widget/rim:permissions">
+            <rim:permit>read_device_identifying_information</rim:permit>
+        </config-file>
+
+        <!-- required plugins -->
+        <dependency id="com.blackberry.community.gsecrypto" />
+        <dependency id="com.blackberry.invoke" />
+
+    </platform>
+
 </plugin>
