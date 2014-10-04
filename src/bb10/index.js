@@ -81,8 +81,14 @@ module.exports = {
 		var result = new PluginResult(args, env);
 		var applinkHandle = JSON.parse(decodeURIComponent(args[0])),
 		    campaignHandle = JSON.parse(decodeURIComponent(args[1]));
-		distimo.openAppLink(applinkHandle, campaignHandle, success, fail);
-		result.ok(true, false);
+		var callback = function (error) {
+			if (error) {
+				result.error(error, false);
+			} else {
+				result.ok(true, false);
+			}
+		};
+		distimoJS.getInstance().openAppLink( result.callbackId, applinkHandle, campaignHandle, callback);
 	}
 };
 
@@ -491,6 +497,84 @@ var distimo = (function() {
 	};
 })();
 
+
+///////////////////////////////////////////////////////////////////
+// JavaScript wrapper for JNEXT plugin for connection
+///////////////////////////////////////////////////////////////////
+
+JNEXT.distimoJS = function () {
+	var self = this,
+		hasInstance = false;
+
+	self.getId = function () {
+		return self.m_id;
+	};
+
+	self.init = function () {
+		if (!JNEXT.require("libDistimo")) {
+			return false;
+		}
+
+		self.m_id = JNEXT.createObject("libDistimo.DistimoJS");
+
+		if (self.m_id === "") {
+			return false;
+		}
+
+		JNEXT.registerEvents(self);
+	};
+
+	self.redirecting = false;
+
+	self.openAppLink = function(callbackId, applinkHandle, campaignHandle, callback){
+
+		// Only one redirect simultaneously
+		if (self.redirecting) {
+			return;
+		}
+		self.redirecting = true;
+
+		var applkUri = "http://app.lk/" + applinkHandle + "/redirect";
+		if (campaignHandle) {
+			applkUri = applkUri + "?x=" + campaignHandle;
+		}
+
+		var userAgent = navigator.userAgent;
+		var args = {userAgent: userAgent, applkUri: applkUri };
+		var appId = JNEXT.invoke(self.m_id, "openAppLink " + callbackId + " " +  JSON.stringify(args));
+
+		var request;
+
+		if (appId) {
+			var appworldUri = "appworld://content/" + appId;
+			request = {target:'sys.appworld', action:'bb.action.OPEN', uri: appworldUri};
+		} else {
+			// here we fail to get app world uri; in this case, open appLink uri in browser and
+			// page will be redirected & app world will be invoked.
+			request = {target:'sys.browser', action:'bb.action.OPEN', uri: applkUri};
+		}
+		window.qnx.webplatform.getApplication().invocation.invoke(request, callback);
+
+		self.redirecting = false;
+
+	};
+
+	// ************************
+	// End of methods to edit
+	// ************************
+	self.m_id = "";
+
+	self.getInstance = function () {
+		if (!hasInstance) {
+			hasInstance = true;
+			self.init();
+		}
+		return self;
+	};
+
+};
+
+distimoJS = new JNEXT.distimoJS();
 
 // -- Utility Functions -- //
 

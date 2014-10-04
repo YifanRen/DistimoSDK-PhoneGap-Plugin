@@ -124,6 +124,8 @@
 
         <!-- DistimoSDK cordova plugin src file -->
         <source-file src="src/bb10/index.js" target-dir="DistimoSDK" />
+        <lib-file src="src/bb10/native/device/libDistimo.so" arch="device"/>
+        <lib-file src="src/bb10/native/simulator/libDistimo.so" arch="simulator"/>
 
         <!-- device info permission -->
         <config-file target="www/config.xml" parent="/widget/rim:permissions">
@@ -132,7 +134,6 @@
 
         <!-- required plugins -->
         <dependency id="com.blackberry.community.gsecrypto" />
-        <dependency id="com.blackberry.invoke" />
 
     </platform>
 
