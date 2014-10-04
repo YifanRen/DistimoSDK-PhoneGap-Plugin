@@ -15,12 +15,12 @@
  */
 
 #include <json/reader.h>
-// #include <bb/cascades/WebSettings>
-#include "distimo_js.hpp"
-#include "distimo_ndk.hpp"
 #include <curl/curl.h>
 #include <curl/easy.h>
 #include <sstream>
+#include "distimo_js.hpp"
+#include "distimo_ndk.hpp"
+
 
 namespace webworks {
 
@@ -38,7 +38,7 @@ namespace webworks {
           char * ch = strrchr(buffer, '/');
           if (NULL != ch) {
             // store appId after the last '/'; \0xd\n at the end is removed
-            size_t len = total-(ch-buffer)-3;
+            size_t len = total - (ch - buffer) - 3;
             char ** appId = (char**)userdata;
             *appId = (char *) malloc (len+1);
             memcpy((*appId), ++ch, len);
@@ -59,7 +59,7 @@ namespace webworks {
         bool parse = reader.parse(inputString, root);
 
         if (!parse) {
-            return inputString;             // empty
+            return ret;                  // empty
         }
 
         string userAgent = string("User-Agent: ") + root["userAgent"].asCString();
@@ -68,7 +68,7 @@ namespace webworks {
         CURL *curl;
         curl = curl_easy_init();
         if (!curl) {
-            return "init error";             // empty
+            return ret;                  // empty
         }
 
         curl_easy_setopt(curl, CURLOPT_URL, applkUri);

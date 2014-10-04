@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include "../public/tokenizer.h"
 #include "distimo_js.hpp"
 #include "distimo_ndk.hpp"
 
